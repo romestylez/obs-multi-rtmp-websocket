@@ -6,6 +6,7 @@ project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
 option(ENABLE_QT "Use Qt functionality" OFF)
+option(ENABLE_WEBSOCKET "Enable OBS WebSocket vendor support" ON)
 
 include(compilerconfig)
 include(defaults)
@@ -13,9 +14,9 @@ include(helpers)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/libobs)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/deps/w32-pthreads)
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/UI/obs-frontend-api)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/build_x64/libobs)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/build_x64/deps/w32-pthreads)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/build_x64/UI/obs-frontend-api)
 
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
@@ -43,8 +44,8 @@ if(ENABLE_WEBSOCKET)
   find_path(OBS_WEBSOCKET_INCLUDE_DIR
     NAMES obs-websocket-api.h
     PATHS
-      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-31.0.0/build_x64/plugins/obs-websocket"
-      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-31.0.0/plugins/obs-websocket"
+      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/build_x64/plugins/obs-websocket"
+      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/plugins/obs-websocket"
       /usr/include
       /usr/local/include
   )
@@ -84,7 +85,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
   ./dep/nlohmann-json
-  .deps/obs-studio-31.0.0/libobs
+  .deps/obs-studio-32.1.0/libobs
   ./src
 )
 
