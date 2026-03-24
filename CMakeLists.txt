@@ -40,17 +40,8 @@ if(ENABLE_QT)
 endif()
 
 if(ENABLE_WEBSOCKET)
-  # Try to find obs-websocket headers
-  find_path(OBS_WEBSOCKET_INCLUDE_DIR
-    NAMES obs-websocket-api.h
-    PATHS
-      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/build_x64/plugins/obs-websocket"
-      "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-studio-32.1.0/plugins/obs-websocket"
-      /usr/include
-      /usr/local/include
-  )
-  
-  if(OBS_WEBSOCKET_INCLUDE_DIR)
+  set(OBS_WEBSOCKET_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dep/obs-websocket")
+  if(EXISTS "${OBS_WEBSOCKET_INCLUDE_DIR}/obs-websocket-api.h")
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${OBS_WEBSOCKET_INCLUDE_DIR})
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ENABLE_WEBSOCKET=1)
     message(STATUS "Found obs-websocket headers: ${OBS_WEBSOCKET_INCLUDE_DIR}")
