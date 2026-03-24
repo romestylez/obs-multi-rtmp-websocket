@@ -29,12 +29,9 @@ bool MultiRTMPWebsocketVendor::Initialize() {
 #ifdef ENABLE_WEBSOCKET
     blog(LOG_INFO, TAG "Websocket support enabled, attempting to register vendor");
     
-    // ✅ Use the header API directly - no dynamic loading!
-    // First ensure the proc handler is available
     if (!obs_websocket_ensure_ph()) {
         blog(LOG_WARNING, TAG "obs-websocket proc handler not available yet");
         
-        // Retry after a short delay
         QTimer::singleShot(1000, []() {
             blog(LOG_INFO, TAG "Retrying vendor registration...");
             MultiRTMPWebsocketVendor::Instance()->Initialize();
@@ -43,18 +40,15 @@ bool MultiRTMPWebsocketVendor::Initialize() {
         return false;
     }
     
-    // Register the vendor using the header API
     obs_websocket_vendor vendor_handle = obs_websocket_register_vendor(m_vendorName.c_str());
     if (!vendor_handle) {
         blog(LOG_ERROR, TAG "Failed to register vendor: %s", m_vendorName.c_str());
         return false;
     }
     
-    // Store the vendor handle for later use
     m_vendorHandle = vendor_handle;
     blog(LOG_INFO, TAG "Vendor registered successfully: %s", m_vendorName.c_str());
     
-    // Now register all our request handlers
     RegisterVendorRequests(vendor_handle);
     
     return true;
@@ -67,7 +61,6 @@ bool MultiRTMPWebsocketVendor::Initialize() {
 void MultiRTMPWebsocketVendor::Shutdown() {
 #ifdef ENABLE_WEBSOCKET
     if (m_vendorHandle) {
-        // You might want to unregister requests here if needed
         m_vendorHandle = nullptr;
     }
 #endif
@@ -79,7 +72,6 @@ void MultiRTMPWebsocketVendor::RegisterVendorRequests(obs_websocket_vendor vendo
 #ifdef ENABLE_WEBSOCKET
     blog(LOG_INFO, TAG "Registering vendor requests...");
     
-    // Register each request with its specific callback
     bool success = true;
     
     success &= obs_websocket_vendor_register_request(vendor_handle, "ListTargets", 
@@ -123,7 +115,6 @@ void MultiRTMPWebsocketVendor::RegisterVendorRequests(obs_websocket_vendor vendo
 #endif
 }
 
-// Individual callback implementations
 void MultiRTMPWebsocketVendor::HandleListTargetsRequest(obs_data_t* request_data, obs_data_t* response_data, void* private_data) {
     auto vendor = static_cast<MultiRTMPWebsocketVendor*>(private_data);
     bool success = vendor->HandleListTargets(response_data);
@@ -210,6 +201,7 @@ void MultiRTMPWebsocketVendor::ExecuteInUIThread(std::function<void()> task) {
         }, Qt::QueuedConnection);
     }
 }
+
 void MultiRTMPWebsocketVendor::HandleUpdateSyncStartRequest(obs_data_t* request_data, obs_data_t* response_data, void* private_data) {
     auto vendor = static_cast<MultiRTMPWebsocketVendor*>(private_data);
     bool success = vendor->HandleUpdateSyncStart(request_data, response_data);
@@ -228,7 +220,6 @@ void MultiRTMPWebsocketVendor::HandleGetTargetStatsRequest(obs_data_t* request_d
     obs_data_set_bool(response_data, "success", success);
 }
 
-// The rest of your individual handler methods remain unchanged (they return bool)
 bool MultiRTMPWebsocketVendor::HandleListTargets(obs_data_t* response_data) {
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
     if (!mainwin) {
@@ -236,7 +227,6 @@ bool MultiRTMPWebsocketVendor::HandleListTargets(obs_data_t* response_data) {
         return false;
     }
     
-    // ✅ FIX: Find the dock widget first, then get the MultiOutputWidget from it
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
     if (!dock) {
         obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
@@ -296,7 +286,6 @@ bool MultiRTMPWebsocketVendor::HandleStartTarget(obs_data_t* request_data, obs_d
         return false;
     }
     
-    // ✅ FIX: Call method directly instead of using invokeMethod
     targetWidget->StartStreaming();
     
     obs_data_set_string(response_data, "status", "start_requested");
@@ -312,7 +301,6 @@ bool MultiRTMPWebsocketVendor::HandleStopTarget(obs_data_t* request_data, obs_da
         return false;
     }
     
-    // ✅ FIX: Call method directly instead of using invokeMethod
     targetWidget->StopStreaming();
     
     obs_data_set_string(response_data, "status", "stop_requested");
@@ -330,7 +318,6 @@ bool MultiRTMPWebsocketVendor::HandleToggleTarget(obs_data_t* request_data, obs_
     
     bool isRunning = targetWidget->IsRunning();
     
-    // ✅ FIX: Call methods directly instead of using invokeMethod
     if (isRunning) {
         targetWidget->StopStreaming();
     } else {
@@ -364,7 +351,6 @@ bool MultiRTMPWebsocketVendor::HandleStartAll(obs_data_t* response_data) {
     
     auto pushWidgets = multiOutputWidget->GetAllPushWidgets();
     
-    // ✅ FIX: Use ExecuteInUIThread to run in the correct thread
     ExecuteInUIThread([pushWidgets]() {
         for (auto* widget : pushWidgets) {
             widget->StartStreaming();
@@ -398,7 +384,6 @@ bool MultiRTMPWebsocketVendor::HandleStopAll(obs_data_t* response_data) {
     
     auto pushWidgets = multiOutputWidget->GetAllPushWidgets();
     
-    // ✅ FIX: Use ExecuteInUIThread to run in the correct thread
     ExecuteInUIThread([pushWidgets]() {
         for (auto* widget : pushWidgets) {
             widget->StopStreaming();
@@ -411,12 +396,11 @@ bool MultiRTMPWebsocketVendor::HandleStopAll(obs_data_t* response_data) {
     return true;
 }
 
-// Configuration management handlers
 bool MultiRTMPWebsocketVendor::HandleAddTarget(obs_data_t* request_data, obs_data_t* response_data) {
     const char* name = obs_data_get_string(request_data, "name");
     const char* protocol = obs_data_get_string(request_data, "protocol");
     
-    if (!name) {
+    if (!name || strlen(name) == 0) {
         obs_data_set_string(response_data, "error", "Missing name parameter");
         return false;
     }
@@ -439,16 +423,13 @@ bool MultiRTMPWebsocketVendor::HandleAddTarget(obs_data_t* request_data, obs_dat
         return false;
     }
     
-    // ✅ FIX: Capture variables properly
     bool success = false;
     QString nameQStr = QString::fromUtf8(name);
-    QString protocolQStr = protocol ? QString::fromUtf8(protocol) : QString("RTMP");
+    QString protocolQStr = (protocol && strlen(protocol) > 0) ? QString::fromUtf8(protocol) : QString("RTMP");
     
     QMetaObject::invokeMethod(multiOutputWidget, [multiOutputWidget, nameQStr, protocolQStr, &success]() {
         success = multiOutputWidget->AddNewTarget(nameQStr, protocolQStr);
     }, Qt::BlockingQueuedConnection);
-    
-    obs_data_set_bool(response_data, "success", success);
     
     if (success) {
         obs_data_set_string(response_data, "status", "target_added");
@@ -464,40 +445,26 @@ bool MultiRTMPWebsocketVendor::HandleCloneTarget(obs_data_t* request_data, obs_d
     const char* newName = obs_data_get_string(request_data, "newName");
     const char* newStreamKey = obs_data_get_string(request_data, "newStreamKey");
     
-    if (!sourceId || !newName) {
+    if (!sourceId || strlen(sourceId) == 0 || !newName || strlen(newName) == 0) {
         obs_data_set_string(response_data, "error", "Missing sourceId or newName parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
-    QString streamKeyQStr = newStreamKey ? QString::fromUtf8(newStreamKey) : QString();
+    QString streamKeyQStr = (newStreamKey && strlen(newStreamKey) > 0) ? QString::fromUtf8(newStreamKey) : QString();
     
-    // ✅ FIX: Execute in UI thread to avoid threading issues
     bool success = false;
     QMetaObject::invokeMethod(multiOutputWidget, [multiOutputWidget, sourceId, newName, streamKeyQStr, &success]() {
-        success = multiOutputWidget->CloneTarget(QString::fromUtf8(sourceId), 
-                                               QString::fromUtf8(newName),
-                                               streamKeyQStr);
-    }, Qt::BlockingQueuedConnection);  // Use blocking to get the result
-    
-    obs_data_set_bool(response_data, "success", success);
+        success = multiOutputWidget->CloneTarget(QString::fromUtf8(sourceId), QString::fromUtf8(newName), streamKeyQStr);
+    }, Qt::BlockingQueuedConnection);
     
     if (success) {
         obs_data_set_string(response_data, "status", "target_cloned");
@@ -508,35 +475,22 @@ bool MultiRTMPWebsocketVendor::HandleCloneTarget(obs_data_t* request_data, obs_d
     return success;
 }
 
-// Fix HandleUpdateTargetName
 bool MultiRTMPWebsocketVendor::HandleUpdateTargetName(obs_data_t* request_data, obs_data_t* response_data) {
     const char* targetId = obs_data_get_string(request_data, "targetId");
     const char* newName = obs_data_get_string(request_data, "newName");
     
-    if (!targetId || !newName) {
+    if (!targetId || strlen(targetId) == 0 || !newName || strlen(newName) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId or newName parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
-    // ✅ FIX: Capture variables properly and use correct function signature
     bool success = false;
     QString targetIdQStr = QString::fromUtf8(targetId);
     QString newNameQStr = QString::fromUtf8(newName);
@@ -545,46 +499,28 @@ bool MultiRTMPWebsocketVendor::HandleUpdateTargetName(obs_data_t* request_data, 
         success = multiOutputWidget->UpdateTargetName(targetIdQStr, newNameQStr);
     }, Qt::BlockingQueuedConnection);
     
-    obs_data_set_bool(response_data, "success", success);
-    
-    if (success) {
-        obs_data_set_string(response_data, "status", "name_updated");
-    } else {
-        obs_data_set_string(response_data, "error", "Failed to update name");
-    }
+    if (success) { obs_data_set_string(response_data, "status", "name_updated"); }
+    else { obs_data_set_string(response_data, "error", "Failed to update name"); }
     
     return success;
 }
 
-// Fix HandleUpdateStreamKey
 bool MultiRTMPWebsocketVendor::HandleUpdateStreamKey(obs_data_t* request_data, obs_data_t* response_data) {
     const char* targetId = obs_data_get_string(request_data, "targetId");
     const char* streamKey = obs_data_get_string(request_data, "streamKey");
     
-    if (!targetId || !streamKey) {
+    if (!targetId || strlen(targetId) == 0 || !streamKey || strlen(streamKey) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId or streamKey parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
-    // ✅ FIX: Capture variables properly and use correct function signature
     bool success = false;
     QString targetIdQStr = QString::fromUtf8(targetId);
     QString streamKeyQStr = QString::fromUtf8(streamKey);
@@ -593,47 +529,29 @@ bool MultiRTMPWebsocketVendor::HandleUpdateStreamKey(obs_data_t* request_data, o
         success = multiOutputWidget->UpdateTargetStreamKey(targetIdQStr, streamKeyQStr);
     }, Qt::BlockingQueuedConnection);
     
-    obs_data_set_bool(response_data, "success", success);
-    
-    if (success) {
-        obs_data_set_string(response_data, "status", "stream_key_updated");
-    } else {
-        obs_data_set_string(response_data, "error", "Failed to update stream key");
-    }
+    if (success) { obs_data_set_string(response_data, "status", "stream_key_updated"); }
+    else { obs_data_set_string(response_data, "error", "Failed to update stream key"); }
     
     return success;
 }
 
-// Fix HandleUpdateServiceParam
 bool MultiRTMPWebsocketVendor::HandleUpdateServiceParam(obs_data_t* request_data, obs_data_t* response_data) {
     const char* targetId = obs_data_get_string(request_data, "targetId");
     const char* key = obs_data_get_string(request_data, "key");
     const char* value = obs_data_get_string(request_data, "value");
     
-    if (!targetId || !key || !value) {
+    if (!targetId || strlen(targetId) == 0 || !key || strlen(key) == 0 || !value || strlen(value) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId, key, or value parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
-    // ✅ FIX: Capture variables properly and use correct function signature
     bool success = false;
     QString targetIdQStr = QString::fromUtf8(targetId);
     QString keyQStr = QString::fromUtf8(key);
@@ -643,13 +561,8 @@ bool MultiRTMPWebsocketVendor::HandleUpdateServiceParam(obs_data_t* request_data
         success = multiOutputWidget->UpdateTargetServiceParam(targetIdQStr, keyQStr, valueQStr);
     }, Qt::BlockingQueuedConnection);
     
-    obs_data_set_bool(response_data, "success", success);
-    
-    if (success) {
-        obs_data_set_string(response_data, "status", "service_param_updated");
-    } else {
-        obs_data_set_string(response_data, "error", "Failed to update service parameter");
-    }
+    if (success) { obs_data_set_string(response_data, "status", "service_param_updated"); }
+    else { obs_data_set_string(response_data, "error", "Failed to update service parameter"); }
     
     return success;
 }
@@ -657,42 +570,25 @@ bool MultiRTMPWebsocketVendor::HandleUpdateServiceParam(obs_data_t* request_data
 bool MultiRTMPWebsocketVendor::HandleDeleteTarget(obs_data_t* request_data, obs_data_t* response_data) {
     const char* targetId = obs_data_get_string(request_data, "targetId");
     
-    if (!targetId) {
+    if (!targetId || strlen(targetId) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
-    // ✅ FIX: Execute in UI thread
     bool success = false;
     QMetaObject::invokeMethod(multiOutputWidget, [multiOutputWidget, targetId, &success]() {
         success = multiOutputWidget->DeleteTarget(QString::fromUtf8(targetId));
     }, Qt::BlockingQueuedConnection);
     
-    obs_data_set_bool(response_data, "success", success);
-    
-    if (success) {
-        obs_data_set_string(response_data, "status", "target_deleted");
-    } else {
-        obs_data_set_string(response_data, "error", "Failed to delete target");
-    }
+    if (success) { obs_data_set_string(response_data, "status", "target_deleted"); }
+    else { obs_data_set_string(response_data, "error", "Failed to delete target"); }
     
     return success;
 }
@@ -701,28 +597,17 @@ bool MultiRTMPWebsocketVendor::HandleUpdateSyncStart(obs_data_t* request_data, o
     const char* targetId = obs_data_get_string(request_data, "targetId");
     bool syncStart = obs_data_get_bool(request_data, "syncStart");
     
-    if (!targetId) {
+    if (!targetId || strlen(targetId) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
     bool success = false;
     QMetaObject::invokeMethod(multiOutputWidget, [multiOutputWidget, targetId, syncStart, &success]() {
@@ -737,28 +622,17 @@ bool MultiRTMPWebsocketVendor::HandleUpdateSyncStop(obs_data_t* request_data, ob
     const char* targetId = obs_data_get_string(request_data, "targetId");
     bool syncStop = obs_data_get_bool(request_data, "syncStop");
     
-    if (!targetId) {
+    if (!targetId || strlen(targetId) == 0) {
         obs_data_set_string(response_data, "error", "Missing targetId parameter");
         return false;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    if (!mainwin) {
-        obs_data_set_string(response_data, "error", "Cannot find main window");
-        return false;
-    }
-    
+    if (!mainwin) { obs_data_set_string(response_data, "error", "Cannot find main window"); return false; }
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
-    if (!dock) {
-        obs_data_set_string(response_data, "error", "Multi RTMP dock not found");
-        return false;
-    }
-    
+    if (!dock) { obs_data_set_string(response_data, "error", "Multi RTMP dock not found"); return false; }
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
-    if (!multiOutputWidget) {
-        obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget");
-        return false;
-    }
+    if (!multiOutputWidget) { obs_data_set_string(response_data, "error", "Failed to cast to MultiOutputWidget"); return false; }
     
     bool success = false;
     QMetaObject::invokeMethod(multiOutputWidget, [multiOutputWidget, targetId, syncStop, &success]() {
@@ -776,16 +650,13 @@ bool MultiRTMPWebsocketVendor::HandleGetTargetStats(obs_data_t* request_data, ob
         return false;
     }
     
-    // Get the status text (this is thread-safe)
     QString statusText;
     QMetaObject::invokeMethod(targetWidget, [targetWidget, &statusText]() {
         statusText = targetWidget->GetStatusText();
     }, Qt::BlockingQueuedConnection);
     
-    // Parse the status text to extract structured data
     ParseStatusText(statusText, response_data);
     
-    // Add basic target info
     obs_data_set_string(response_data, "id", targetWidget->GetTargetId().toUtf8().constData());
     obs_data_set_string(response_data, "name", targetWidget->GetTargetName().toUtf8().constData());
     obs_data_set_bool(response_data, "isRunning", targetWidget->IsRunning());
@@ -794,10 +665,8 @@ bool MultiRTMPWebsocketVendor::HandleGetTargetStats(obs_data_t* request_data, ob
     return true;
 }
 
-// NEW: Parse status text helper method
 void MultiRTMPWebsocketVendor::ParseStatusText(const QString& statusText, obs_data_t* response_data) {
     if (statusText.isEmpty()) {
-        // Stream is not active or no stats available
         obs_data_set_string(response_data, "duration", "00:00:00");
         obs_data_set_string(response_data, "bitrate", "0 bps");
         obs_data_set_string(response_data, "fps", "0 FPS");
@@ -806,52 +675,36 @@ void MultiRTMPWebsocketVendor::ParseStatusText(const QString& statusText, obs_da
         return;
     }
     
-    // Parse the format: "HH:MM:SS  X.XX Mbps  Y FPS"
-    // Use Qt6 compatible split - Qt::SkipEmptyParts might not be available in older Qt6 versions
     QStringList parts = statusText.split("  ", Qt::SplitBehaviorFlags::SkipEmptyParts);
     
     if (parts.size() >= 3) {
-        // Duration (first part)
         obs_data_set_string(response_data, "duration", parts[0].toUtf8().constData());
         
-        // Bitrate (second part)
         QString bitrateStr = parts[1];
         obs_data_set_string(response_data, "bitrate", bitrateStr.toUtf8().constData());
+        obs_data_set_double(response_data, "bitrateValue", ParseBitrateValue(bitrateStr));
         
-        // Extract numeric bitrate value
-        double bitrateValue = ParseBitrateValue(bitrateStr);
-        obs_data_set_double(response_data, "bitrateValue", bitrateValue);
-        
-        // FPS (third part)
         QString fpsStr = parts[2];
         obs_data_set_string(response_data, "fps", fpsStr.toUtf8().constData());
-        
-        // Extract numeric FPS value
-        double fpsValue = ParseFpsValue(fpsStr);
-        obs_data_set_double(response_data, "fpsValue", fpsValue);
+        obs_data_set_double(response_data, "fpsValue", ParseFpsValue(fpsStr));
     }
 }
 
-// NEW: Parse bitrate value helper
 double MultiRTMPWebsocketVendor::ParseBitrateValue(const QString& bitrateStr) {
-    // Examples: "1.23 Mbps", "456 Kbps", "789 bps"
     QRegularExpression regex("([\\d.]+)\\s*(\\w+)ps");
     QRegularExpressionMatch match = regex.match(bitrateStr);
     if (match.hasMatch()) {
         double value = match.captured(1).toDouble();
         QString unit = match.captured(2).toLower();
-        
         if (unit == "g") return value * 1000000000;
         if (unit == "m") return value * 1000000;
         if (unit == "k") return value * 1000;
-        return value; // bps
+        return value;
     }
     return 0;
 }
 
-// NEW: Parse FPS value helper
 double MultiRTMPWebsocketVendor::ParseFpsValue(const QString& fpsStr) {
-    // Example: "30 FPS"
     QRegularExpression regex("(\\d+)\\s*FPS");
     QRegularExpressionMatch match = regex.match(fpsStr);
     if (match.hasMatch()) {
@@ -860,37 +713,39 @@ double MultiRTMPWebsocketVendor::ParseFpsValue(const QString& fpsStr) {
     return 0;
 }
 
+// ✅ BUG FIX: obs_data_get_string never returns nullptr, it returns ""
+// Must check strlen() to distinguish "not provided" from "provided but empty"
 PushWidget* MultiRTMPWebsocketVendor::FindPushWidgetByIdOrName(obs_data_t* request_data) {
     const char* targetId = obs_data_get_string(request_data, "id");
     const char* targetName = obs_data_get_string(request_data, "name");
     
-    if (!targetId && !targetName) {
+    bool hasId = targetId && strlen(targetId) > 0;
+    bool hasName = targetName && strlen(targetName) > 0;
+    
+    if (!hasId && !hasName) {
         return nullptr;
     }
     
     auto mainwin = static_cast<QMainWindow*>(obs_frontend_get_main_window());
     if (!mainwin) return nullptr;
     
-    // ✅ FIX: The dock widget has the name "obs-multi-rtmp-dock" but it's a QDockWidget
-    // We need to find the actual MultiOutputWidget inside it
     auto dock = mainwin->findChild<QDockWidget*>("obs-multi-rtmp-dock");
     if (!dock) {
         blog(LOG_WARNING, TAG "Dock widget not found");
         return nullptr;
     }
     
-    // ✅ Get the MultiOutputWidget from the dock's widget
     auto multiOutputWidget = qobject_cast<MultiOutputWidget*>(dock->widget());
     if (!multiOutputWidget) {
         blog(LOG_WARNING, TAG "Failed to cast dock widget to MultiOutputWidget");
         return nullptr;
     }
     
-    if (targetId) {
+    if (hasId) {
         return multiOutputWidget->FindPushWidgetById(QString::fromUtf8(targetId));
     }
     
-    // If only name is provided, search by name
+    // Search by name
     auto pushWidgets = multiOutputWidget->GetAllPushWidgets();
     for (auto* widget : pushWidgets) {
         if (widget->GetTargetName() == QString::fromUtf8(targetName)) {
