@@ -1,34 +1,96 @@
-# obs-multi-rtmp with OBS Websocket support
+# 🎥 obs-multi-rtmp (WebSocket Edition)
 
-Adds OBS websocket server API support to the obs-multi-rtmp plugin.
+Adds **OBS WebSocket API support** to the [obs-multi-rtmp](https://github.com/sorayuki/obs-multi-rtmp) plugin,
+enabling full remote control of RTMP targets.
 
-## Complete Websocket API Function List:
-ListTargets - Get all configured RTMP targets  
-GetTargetState - Get current state of a specific target  
-StartTarget - Start a specific target  
-StopTarget - Stop a specific target  
-ToggleTarget - Toggle start/stop state of a target  
-StartAll - Start all targets  
-StopAll - Stop all targets  
-AddTarget - Add a new target  
-CloneTarget - Clone an existing target  
-UpdateTargetName - Update target name  
-UpdateStreamKey - Update target stream key  
-UpdateServiceParam - Update service parameter  
-DeleteTarget - Delete a target  
-UpdateSyncStart - Sync start with OBS  
-UpdateSyncStop - Sync stop with OBS  
-GetTargetStats - Get stats of a specific target  
+------------------------------------------------------------------------
 
-# Build commands used for compiling on PC:
-cls  
-cd "C:\obs-multi-rtmp-websocket" -> **adjust for your path**
-rmdir /s /q build  
-mkdir build  
-cd build  
-cls  
-cmake .. -G "Visual Studio 17 2022" -A x64 -DENABLE_QT=ON -DENABLE_FRONTEND_API=ON -DENABLE_WEBSOCKET=ON  
-cmake --build . --config Release  
+## 🚀 Features
 
-This project uses obs-plugintemplate.   
-Please refer to obs-plugintemplate to understand how it works.
+-   Full control over RTMP targets via WebSocket
+-   Start / Stop individual or all targets
+-   Dynamic target management (add, clone, delete)
+-   Sync with OBS streaming state
+-   Retrieve detailed stats per target
+
+------------------------------------------------------------------------
+
+## 🔌 WebSocket API
+
+### 📡 Target Management
+
+-   `ListTargets` -- Get all configured RTMP targets\
+-   `GetTargetState` -- Get current state of a specific target\
+-   `AddTarget` -- Add a new target\
+-   `CloneTarget` -- Clone an existing target\
+-   `DeleteTarget` -- Delete a target
+
+### ▶️ Stream Control
+
+-   `StartTarget` -- Start a specific target\
+-   `StopTarget` -- Stop a specific target\
+-   `ToggleTarget` -- Toggle start/stop state\
+-   `StartAll` -- Start all targets\
+-   `StopAll` -- Stop all targets
+
+### ⚙️ Configuration
+
+-   `UpdateTargetName` -- Rename a target\
+-   `UpdateStreamKey` -- Update stream key\
+-   `UpdateServiceParam` -- Update service parameters\
+-   `UpdateSyncStart` -- Sync start with OBS\
+-   `UpdateSyncStop` -- Sync stop with OBS
+
+### 📊 Monitoring
+
+-   `GetTargetStats` -- Retrieve stats for a target
+
+------------------------------------------------------------------------
+
+## 🛠️ Build Instructions (Windows)
+
+``` bash
+cls
+cd "C:\obs-multi-rtmp-websocket"   # adjust path
+rmdir /s /q build
+mkdir build
+cd build
+cls
+
+cmake .. -G "Visual Studio 17 2022" -A x64 ^
+  -DENABLE_QT=ON ^
+  -DENABLE_FRONTEND_API=ON ^
+  -DENABLE_WEBSOCKET=ON
+
+cmake --build . --config Release
+```
+
+------------------------------------------------------------------------
+
+## 📦 Requirements
+
+-   OBS Studio (with plugin support)
+-   Visual Studio 2022
+-   CMake
+-   Qt (enabled via flag)
+
+------------------------------------------------------------------------
+
+## 📚 Based on
+
+This project uses **obs-plugintemplate**\
+➡️ Refer to it for internal structure and plugin behavior.
+
+------------------------------------------------------------------------
+
+## 💡 Notes
+
+-   WebSocket API extends OBS functionality significantly
+-   Designed for automation & multi-stream setups
+-   Compatible with existing obs-multi-rtmp workflows
+
+------------------------------------------------------------------------
+
+## 🧠 Author Notes
+
+Clean, minimal, and focused on performance + remote control use cases.
