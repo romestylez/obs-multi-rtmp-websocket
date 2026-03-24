@@ -1,95 +1,114 @@
 # 🎥 obs-multi-rtmp (WebSocket Edition)
-
 Adds **OBS WebSocket API support** to the [obs-multi-rtmp](https://github.com/sorayuki/obs-multi-rtmp) plugin,
 enabling full remote control of RTMP targets.
 
 ------------------------------------------------------------------------
 
 ## 🚀 Features
-
--   Full control over RTMP targets via WebSocket
--   Start / Stop individual or all targets
--   Dynamic target management (add, clone, delete)
--   Sync with OBS streaming state
--   Retrieve detailed stats per target
+- Full control over RTMP targets via WebSocket
+- Start / Stop individual or all targets
+- Dynamic target management (add, clone, delete)
+- Sync with OBS streaming state
+- Retrieve detailed stats per target
 
 ------------------------------------------------------------------------
 
 ## 🔌 WebSocket API
 
-### 📡 Target Management
+**Vendor Name:** `romestylez.multi_rtmp`
 
--   `ListTargets` -- Get all configured RTMP targets\
--   `GetTargetState` -- Get current state of a specific target\
--   `AddTarget` -- Add a new target\
--   `CloneTarget` -- Clone an existing target\
--   `DeleteTarget` -- Delete a target
+### 📡 Target Management
+- `ListTargets` – Get all configured RTMP targets
+- `GetTargetState` – Get current state of a specific target
+- `AddTarget` – Add a new target
+- `CloneTarget` – Clone an existing target
+- `DeleteTarget` – Delete a target
 
 ### ▶️ Stream Control
-
--   `StartTarget` -- Start a specific target\
--   `StopTarget` -- Stop a specific target\
--   `ToggleTarget` -- Toggle start/stop state\
--   `StartAll` -- Start all targets\
--   `StopAll` -- Stop all targets
+- `StartTarget` – Start a specific target
+- `StopTarget` – Stop a specific target
+- `ToggleTarget` – Toggle start/stop state
+- `StartAll` – Start all targets
+- `StopAll` – Stop all targets
 
 ### ⚙️ Configuration
-
--   `UpdateTargetName` -- Rename a target\
--   `UpdateStreamKey` -- Update stream key\
--   `UpdateServiceParam` -- Update service parameters\
--   `UpdateSyncStart` -- Sync start with OBS\
--   `UpdateSyncStop` -- Sync stop with OBS
+- `UpdateTargetName` – Rename a target
+- `UpdateStreamKey` – Update stream key
+- `UpdateServiceParam` – Update service parameters
+- `UpdateSyncStart` – Sync start with OBS
+- `UpdateSyncStop` – Sync stop with OBS
 
 ### 📊 Monitoring
-
--   `GetTargetStats` -- Retrieve stats for a target
+- `GetTargetStats` – Retrieve stats for a target
 
 ------------------------------------------------------------------------
 
-## 🛠️ Build Instructions (Windows)
+## 🧪 WebSocket Tester
 
-``` bash
-cls
-cd "C:\obs-multi-rtmp-websocket"   # adjust path
-rmdir /s /q build
-mkdir build
-cd build
-cls
+A standalone HTML tester is included (`obs-websocket-tester.html`) that lets you test all API calls directly from your browser – no extra tools needed.
 
-cmake .. -G "Visual Studio 17 2022" -A x64 ^
-  -DENABLE_QT=ON ^
-  -DENABLE_FRONTEND_API=ON ^
-  -DENABLE_WEBSOCKET=ON
+**Features:**
+- Connects to OBS WebSocket with automatic authentication
+- Dropdown for all available requests
+- Shows raw sent JSON and received response side by side
+- Copy buttons for easy use in Streamer.bot or other tools
 
-cmake --build . --config Release
+**Usage:**
+1. Copy `obs-websocket-tester.html` to your OBS machine
+2. Open it in any browser (double-click)
+3. Enter your OBS WebSocket host, port and password
+4. Click **Connect** and start sending requests
+
+**Example – Stop the Kick target:**
+
+```json
+{
+  "op": 6,
+  "d": {
+    "requestType": "CallVendorRequest",
+    "requestId": "my-request-1",
+    "requestData": {
+      "vendorName": "romestylez.multi_rtmp",
+      "requestType": "StopTarget",
+      "requestData": {
+        "name": "Kick"
+      }
+    }
+  }
+}
 ```
 
 ------------------------------------------------------------------------
 
-## 📦 Requirements
+## 📦 Installation
 
--   OBS Studio (with plugin support)
--   Visual Studio 2022
--   CMake
--   Qt (enabled via flag)
+1. Download the latest installer (`.exe`) from [Releases](../../releases)
+2. Run the installer – it handles everything automatically
+3. Restart OBS
+4. Check OBS log for: `Vendor registered successfully: romestylez.multi_rtmp`
+
+> Alternatively, download the `.zip` and manually copy `obs-plugins/64bit/obs-multi-rtmp.dll` to `C:\ProgramData\obs-studio\plugins\obs-multi-rtmp\bin\64bit\`
+
+------------------------------------------------------------------------
+
+## 🛠️ Build Instructions (via GitHub Actions)
+
+Push to this repo and run the **Push** workflow manually via GitHub Actions.
+The built ZIP and installer will appear as workflow artifacts.
 
 ------------------------------------------------------------------------
 
 ## 📚 Based on
 
-This project uses **[obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)**
+- [obs-multi-rtmp](https://github.com/sorayuki/obs-multi-rtmp) by SoraYuki
+- [obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)
+- WebSocket fork originally by [davidcool](https://github.com/davidcool/obs-multi-rtmp-websocket-support)
 
 ------------------------------------------------------------------------
 
 ## 💡 Notes
 
--   WebSocket API extends OBS functionality significantly
--   Designed for automation & multi-stream setups
--   Compatible with existing obs-multi-rtmp workflows
-
-------------------------------------------------------------------------
-
-## 🧠 Author Notes
-
-Clean, minimal, and focused on performance + remote control use cases.
+- WebSocket API extends OBS functionality significantly
+- Designed for automation & multi-stream setups
+- Compatible with existing obs-multi-rtmp workflows
+- Works great with Streamer.bot, PocketChat, or any OBS WebSocket client
