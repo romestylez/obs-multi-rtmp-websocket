@@ -6,6 +6,13 @@
 !/build-aux
 !/cmake
 !/data
+# Except for default project files
+!/.github
+!/build-aux
+!/cmake
+!/data
+!/dep
+!/src
 !/src
 !.clang-format
 !.gersemirc
