@@ -78,7 +78,7 @@ cmake --build . --config Release
 
 ## 📚 Based on
 
-This project uses **[obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)**\
+This project uses **[obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate)**
 
 ------------------------------------------------------------------------
 
