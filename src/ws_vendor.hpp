@@ -72,6 +72,6 @@ private:
     double ParseFpsValue(const QString& fpsStr);
     
     static MultiRTMPWebsocketVendor* s_instance;
-    std::string m_vendorName = "sorayuki.multi_rtmp";
+    std::string m_vendorName = "romestylez.multi_rtmp";
     obs_websocket_vendor m_vendorHandle = nullptr;
 };
